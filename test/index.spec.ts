@@ -1,9 +1,3 @@
-/*!
- * koa-isomorphic-router test
- */
-
-'use-strict'
-
 import http from 'http'
 import request from 'supertest'
 import assert from 'assert'
@@ -172,7 +166,7 @@ describe('koa-isomorphic-router', () => {
         response.end()
       })
   
-      methods.forEach(m => { router[m](path, () => {}) })
+      methods.forEach(m => { router[m](path, () => void 0) })
   
       const server = http.createServer((request, response) => {
         router.routes(request, response)
