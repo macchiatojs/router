@@ -1,6 +1,6 @@
 {
   "name": "@grandjs/router",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Expressive elegant modern amiable Router for Grand.js ⚡.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
