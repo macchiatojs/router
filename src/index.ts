@@ -17,6 +17,10 @@ import Trouter, { Methods } from 'trouter'
 import parse from 'parseurl'
 import hashlruCache from 'hashlru'
 
+interface Handler {
+  (request: IncomingMessage, response: ServerResponse): any;
+}
+
 /**
  * Isomorphic Router for Grand.js.
  *
@@ -37,7 +41,7 @@ class Router {
   // init Router.
   constructor (options: { throw?: boolean, prefix?: string } = {}) {
     // init attributes.
-    this.router = new Trouter()
+    this.router = new Trouter<Handler>()
     this.METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
     this.throws = options.throw || false
     this.routePrefix = options.prefix || '/'
@@ -62,7 +66,7 @@ class Router {
   }
 
   // register route with specific method.
-  private _on (method: Methods|Methods[]|'', path: string|Function, ...middlewares: Function[]) {
+  private _on (method: Methods|Methods[]|'', path: string|Handler, ...middlewares: Handler[]) {
     // handle the path arg when passed as middleware.
     if (typeof path !== 'string') {
       middlewares = [path, ...middlewares]
