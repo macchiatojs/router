@@ -5,7 +5,7 @@ import Router from '../src'
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
-describe('koa-isomorphic-router', () => {
+describe('macchiatojs-router', () => {
   function createApp (method, path, options?, custom?) {
     const prefix = custom?.prefix
     const useMethod = custom?.useMethod
