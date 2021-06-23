@@ -1,5 +1,5 @@
 /*!
- * @grandjs/router
+ * @macchiatojs/router
  *
  *
  * Copyright(c) 2021 Imed Jaberi
@@ -22,7 +22,7 @@ interface Handler {
 }
 
 /**
- * Isomorphic Router for Grand.js.
+ * Isomorphic Router for Macchiato.js.
  *
  * @api public
  */
