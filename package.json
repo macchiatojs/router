@@ -1,7 +1,7 @@
 {
-  "name": "@grandjs/router",
-  "version": "0.1.1",
-  "description": "Expressive elegant modern amiable Router for Grand.js ⚡.",
+  "name": "@macchiatojs/router",
+  "version": "0.1.0",
+  "description": "Expressive elegant modern amiable Router for Macchiato.js ⚡.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -23,12 +23,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/grandjs/router.git"
+    "url": "git+https://github.com/macchiatojs/router.git"
   },
   "keywords": [
-    "grandjs",
+    "macchiatojs",
     "router",
-    "grandjs-router",
+    "macchiatojs-router",
     "isomorphic-router",
     "trouter",
     "route",
@@ -70,7 +70,7 @@
     "node": ">= 14"
   },
   "bugs": {
-    "url": "https://github.com/grandjs/router/issues"
+    "url": "https://github.com/macchiatojs/router/issues"
   },
-  "homepage": "https://github.com/grandjs/router#readme"
+  "homepage": "https://github.com/macchiatojs/router#readme"
 }
