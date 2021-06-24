@@ -11,21 +11,34 @@ describe('macchiatojs-router', () => {
     const useMethod = custom?.useMethod
     const handler = custom?.handler
     const chain = custom?.chain
+    const useKoaStyle = options?.useKoaStyle ?? false
     
-    const router = new Router(!useMethod ? { ...options, prefix }: options)
- 
+    const router = new Router(!useMethod ? { ...options, expressify: !useKoaStyle, prefix }: options)
+    let _handler 
+
+    if  (useKoaStyle) {
+      _handler = (ctx) => {
+        ctx.response.statusCode = 200
+        ctx.response.setHeader('content-type', 'application/json')
+        ctx.response.write(JSON.stringify({ msg: `${method} data` }))
+        ctx.response.end()
+      }
+    } else {
+      _handler = (request, response) => {
+        response.statusCode = 200
+        response.setHeader('content-type', 'application/json')
+        response.write(JSON.stringify({ msg: `${method} data` }))
+        response.end()
+      }
+    }
+    
     if (prefix) {
       router
       .prefix(
         useMethod 
           ? prefix
           : undefined
-      )[method](path, (request, response) => {
-        response.statusCode = 200
-        response.setHeader('content-type', 'application/json')
-        response.write(JSON.stringify({ msg: `${method} data` }))
-        response.end()
-      })
+      )[method](path, _handler)
     } else if (handler) {
       router
         .use(handler)[method](path, (request, response) => {
@@ -35,24 +48,9 @@ describe('macchiatojs-router', () => {
           response.end()
         })
     } else if (chain) {
-      router.route(path)['get']((request, response) => {
-        response.statusCode = 200
-        response.setHeader('content-type', 'application/json')
-        response.write(JSON.stringify({ msg: `${method} data` }))
-        response.end()
-      })['post']((request, response) => {
-        response.statusCode = 200
-        response.setHeader('content-type', 'application/json')
-        response.write(JSON.stringify({ msg: `${method} data` }))
-        response.end()
-      })
+      router.route(path)['get'](_handler)['post'](_handler)
     } else {
-      router[method](path, (request, response) => {
-        response.statusCode = 200
-        response.setHeader('content-type', 'application/json')
-        response.write(JSON.stringify({ msg: `${method} data` }))
-        response.end()
-      })
+      router[method](path, _handler)
     }
 
     const server = http.createServer((request, response) => {
@@ -136,6 +134,74 @@ describe('macchiatojs-router', () => {
         .expect(200)
 
         request(createApp('', '/test', {}, { chain: true }))
+          .post('/test')
+          .expect('Content-Type', /json/)
+          .expect(/delete data/)
+          .expect(200)
+
+        done()
+      })()
+    })
+  })
+
+  describe('http verbs/methods with koa style', () => {
+    it('get method', (done) => {      
+      request(createApp('get', '/test', { useKoaStyle: true }))
+        .get('/test')
+        .expect('Content-Type', /json/)
+        .expect(/get data/)
+        .expect(200, done)
+    })
+
+    it('post method', (done) => {
+      request(createApp('post', '/test', { useKoaStyle: true }))
+        .post('/test')
+        .expect('Content-Type', /json/)
+        .expect(/post data/)
+        .expect(200, done)
+    })
+
+    it('put method', (done) => {
+      request(createApp('put', '/test', { useKoaStyle: true }))
+        .put('/test')
+        .expect('Content-Type', /json/)
+        .expect(/put data/)
+        .expect(200, done)
+    })
+
+    it('patch method', (done) => {
+      request(createApp('patch', '/test', { useKoaStyle: true }))
+        .patch('/test')
+        .expect('Content-Type', /json/)
+        .expect(/patch data/)
+        .expect(200, done)
+    })
+
+    it('delete method', (done) => {
+      request(createApp('delete', '/test', { useKoaStyle: true }))
+        .delete('/test')
+        .expect('Content-Type', /json/)
+        .expect(/delete data/)
+        .expect(200, done)
+    })
+
+    describe('all method', () => {
+      METHODS.forEach((method) => {
+        it(method.toLowerCase(), (done) => {
+          request(createApp('all', '/test', { useKoaStyle: true }))[method.toLowerCase()]('/test').expect(200, done())
+        })
+      })
+    })
+
+    it('use route to handle methods (chain)', (done) => {
+      (() => {
+        request(createApp('', '/test', { useKoaStyle: true }, { chain: true }))
+        .get('/test')
+        .expect('Content-Type', /json/)
+        .expect(/get data/)
+        .expect(200)
+
+        request(createApp('', '/test', { useKoaStyle: true }, { chain: true }))
           .post('/test')
           .expect('Content-Type', /json/)
           .expect(/delete data/)
