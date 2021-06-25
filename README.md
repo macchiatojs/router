@@ -83,11 +83,11 @@ app.start(2222);
 
 Create a new router.
 
-| Param                | Type      | Description                                                                          |
-| -------------------- | --------- | ------------------------------------------------------------------------------------ |
-| [options]            | `Object`  |                                                                                      |
-| [options.prefix]     | `String`  | prefix router paths                                                                  |
-| [options.expressify] | `Boolean` | use express/connect style when is true and koa style when is false (default to true) |
+| Param                | Type      | Description                                                                                    |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------------- |
+| [options]            | `Object`  |                                                                                                |
+| [options.prefix]     | `String`  | prefix router paths                                                                            |
+| [options.expressify] | `Boolean` | use `express/connect style` when is `true` and `koa style` when is `false` (default to `true`) |
 
 ### router.get|post|put|patch|delete|all(path, handler)
 
