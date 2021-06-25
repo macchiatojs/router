@@ -87,24 +87,29 @@ return server.listen;
 
 Create a new router.
 
-| Param            | Type      | Description                                      |
-| ---------------- | --------- | ------------------------------------------------ |
-| [options]        | `Object`  |                                                  |
-| [options.prefix] | `String`  | prefix router paths                              |
-| [options.throw]  | `Boolean` | throw error instead of setting status and header |
+| Param                | Type      | Description                                                                          |
+| -------------------- | --------- | ------------------------------------------------------------------------------------ |
+| [options]            | `Object`  |                                                                                      |
+| [options.prefix]     | `String`  | prefix router paths                                                                  |
+| [options.expressify] | `Boolean` | use express/connect style when is true and koa style when is false (default to true) |
 
 ### router.get|post|put|patch|delete|all(path, handler)
 
 The http methods provide the routing functionality in `router`.
 
-Method middleware and handlers follow usual raw Node.js and express middleware behavior, except they will only be called when the method and path match the request.
+Method middleware and handlers follow usual raw Node.js and express middleware or koa middleware behavior, except they will only be called when the method and path match the request.
 
 ```js
 // handle a GET / request.
+
+// Express/Connect Style
 router.get("/", (request, response) => {
-  response.statusCode = 200;
-  response.write("Hello World !");
-  response.end();
+  response.send(200, "Hello World !");
+});
+
+// Koa Style
+router.get("/", (ctx) => {
+  ctx.response.send(200, "Hello World !");
 });
 ```
 
@@ -114,10 +119,15 @@ Route paths can be prefixed at the router level:
 
 ```js
 // handle a GET /prePath/users request.
+
+// Express/Connect Style
 router.prefix("/prePath").get("/users", (request, response) => {
-  response.statusCode = 200;
-  response.write("Hello World !");
-  response.end();
+  response.send(200, "Hello World !");
+});
+
+// Koa Style
+router.prefix("/prePath").get("/users", (ctx) => {
+  ctx.response.send(200, "Hello World !");
 });
 ```
 
@@ -127,10 +137,15 @@ Lookup route with given path.
 
 ```js
 // handle a GET /users request.
+
+// Express/Connect Style
 router.route("/users").get((request, response) => {
-  response.statusCode = 200;
-  response.write("Hello World !");
-  response.end();
+  response.send(200, "Hello World !");
+});
+
+// Koa Style
+router.route("/users").get((ctx) => {
+  ctx.response.send(200, "Hello World !");
 });
 ```
 
@@ -138,7 +153,7 @@ router.route("/users").get((request, response) => {
 
 Use given middleware(s). Currently, use middleware(s) for all paths of router isntance.
 
-### router.routes(request, response)
+### router.routes()
 
 Returns router middleware which handle a route matching the request.
 
