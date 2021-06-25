@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+### v0.4.0 (26 Jun 2021)
+
+- add `parseurl` as peerDep
+- add better support for raw Node.js.
+- coverage 100%
+
 ### v0.3.0 (25 Jun 2021)
 
 - add `@macchiatojs/middleware` and `@macchiatojs/koaify-middleware` deps
