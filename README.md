@@ -62,19 +62,38 @@ $ yarn add @macchiatojs/router
 This is a practical example of how to use.
 
 ```typescript
-import Macchiato from "@macchiatojs/kernel";
+import Macchiato, { Request, Response } from "@macchiatojs/kernel";
 import Router from "@macchiatojs/router";
 
 const app = new Macchiato();
 const router = new Router();
 
-router.get("/hello", (request, response) => {
+router.get("/hello", (request: Request, response: Response) => {
   response.body = "Hello World";
 });
 
 app.use(router.routes());
 
 app.start(2222);
+```
+
+with raw Node.js
+
+```typescript
+import http, { IncomingMessage, ServerResponse } from "http";
+import Router from "@macchiatojs/router";
+
+const router = new Router({ raw: true });
+
+router.get("/hello", (request: IncomingMessage, response: ServerResponse) => {
+  response.statusCode = 200;
+  response.write("Hello World !");
+  response.end();
+});
+
+const server = http.createServer(router.rawRoutes());
+
+app.server(2222);
 ```
 
 ## `API`
@@ -88,6 +107,7 @@ Create a new router.
 | [options]            | `Object`  |                                                                                                |
 | [options.prefix]     | `String`  | prefix router paths                                                                            |
 | [options.expressify] | `Boolean` | use `express/connect style` when is `true` and `koa style` when is `false` (default to `true`) |
+| [options.raw]        | `Boolean` | use `raw Node.js server` when is `true` (default to `false`)                                   |
 
 ### router.get|post|put|patch|delete|all(path, handler)
 
@@ -97,6 +117,13 @@ Method middleware and handlers follow usual raw Node.js and express middleware o
 
 ```js
 // handle a GET / request.
+
+// raw Node Style
+router.get("/", (request, response) => {
+  response.statusCode = 200;
+  response.write("Hello World !");
+  response.end();
+});
 
 // Express/Connect Style
 router.get("/", (request, response) => {
@@ -116,6 +143,13 @@ Route paths can be prefixed at the router level:
 ```js
 // handle a GET /prePath/users request.
 
+// raw Node Style
+router.prefix("/prePath").get("/", (request, response) => {
+  response.statusCode = 200;
+  response.write("Hello World !");
+  response.end();
+});
+
 // Express/Connect Style
 router.prefix("/prePath").get("/users", (request, response) => {
   response.send(200, "Hello World !");
@@ -134,6 +168,13 @@ Lookup route with given path.
 ```js
 // handle a GET /users request.
 
+// raw Node Style
+router.prefix("/users").get((request, response) => {
+  response.statusCode = 200;
+  response.write("Hello World !");
+  response.end();
+});
+
 // Express/Connect Style
 router.route("/users").get((request, response) => {
   response.send(200, "Hello World !");
@@ -151,7 +192,11 @@ Use given middleware(s). Currently, use middleware(s) for all paths of router is
 
 ### router.routes()
 
-Returns router middleware which handle a route matching the request.
+Returns router middleware which handle a route matching the request for Macchiato.js.
+
+### router.rawRoutes()
+
+Returns router middleware which handle a route matching the request for raw Node.js.
 
 ## `Support`
 
