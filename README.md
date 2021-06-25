@@ -14,8 +14,8 @@
 
 <!-- ***************** -->
 
-[travis-img]: https://travis-ci.org/macchiatojs/router.svg?branch=master
-[travis-url]: https://travis-ci.org/macchiatojs/router
+[travis-img]: https://travis-ci.com/macchiatojs/router.svg?branch=master
+[travis-url]: https://travis-ci.com/macchiatojs/router
 [coverage-img]: https://coveralls.io/repos/github/macchiatojs/router/badge.svg?branch=master
 [coverage-url]: https://coveralls.io/github/macchiatojs/router?branch=master
 [npm-badge]: https://img.shields.io/npm/v/@macchiatojs/router.svg?style=flat
@@ -28,7 +28,7 @@
 
 <!-- ***************** -->
 
-### Expressive elegant modern amiable glamorous Grand.js Router ⚡.
+### Expressive elegant modern amiable glamorous Macchiato.js Router ⚡.
 
 ## `Features`
 
@@ -62,23 +62,19 @@ $ yarn add @macchiatojs/router
 This is a practical example of how to use.
 
 ```typescript
-import http from "http";
+import Macchiato from "@macchiatojs/kernel";
 import Router from "@macchiatojs/router";
 
+const app = new Macchiato();
 const router = new Router();
 
 router.get("/hello", (request, response) => {
-  response.statusCode = 200;
-  response.setHeader("content-type", "application/json");
-  response.write(JSON.stringify({ msg: "Hello World !" }));
-  response.end();
+  response.body = "Hello World";
 });
 
-const server = http.createServer((request, response) => {
-  router.routes(request, response);
-});
+app.use(router.routes());
 
-return server.listen;
+app.start(2222);
 ```
 
 ## `API`
