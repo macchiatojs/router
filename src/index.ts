@@ -12,11 +12,16 @@
  * Module dependencies.
  */
 
-import { Context, Next, Request, Response, MacchiatoMiddleware } from '@macchiatojs/kernel'
+import { Context, Next, Request, Response, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
 import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
+import { IncomingMessage, ServerResponse } from 'http'
 import Middleware from '@macchiatojs/middleware'
 import Trouter, { Methods } from 'trouter'
 import hashlruCache from 'hashlru'
+import parse from 'parseurl'
+
+export type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
+export type Handler = MacchiatoMiddleware|rawHandler
 
 /**
  * Isomorphic Router for Macchiato.js.
@@ -26,6 +31,7 @@ import hashlruCache from 'hashlru'
 
 class Router {
   // init attributes.
+  #raw: boolean
   #expressify: boolean
   #router: Trouter
   #METHODS: Methods[]
@@ -36,16 +42,21 @@ class Router {
   #allowHeaderStore: any
   
   // init Router.
-  constructor (options: { expressify?: boolean, prefix?: string } = {}) {
+  constructor (options: { raw?: boolean, expressify?: boolean, prefix?: string } = {}) {
     // init attributes.
+    this.#raw = options.raw ?? false
     this.#expressify = options.expressify ?? true
-    this.#router = new Trouter<MacchiatoMiddleware>()
+    this.#router = new Trouter<Handler>()
     this.#METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-    this.#routePrefix = options.prefix || ''
+    this.#routePrefix = options.prefix || '/'
     this.#routePath = undefined
-    this.#middlewaresStore = this.#expressify
-    ? new Middleware<Request, Response>()
-    : new KoaifyMiddleware<Context>()
+    this.#middlewaresStore = (
+      this.#raw 
+      ? new Middleware<IncomingMessage, ServerResponse>()
+      : this.#expressify
+        ? new Middleware<Request, Response>()
+        : new KoaifyMiddleware<Context>()
+    )
     this.#cache = hashlruCache(1000)
     this.#allowHeaderStore = [] // [{ path: '', methods: [] }]
   }
@@ -65,7 +76,7 @@ class Router {
   }
 
   // register route with specific method.
-  #on (method: Methods|Methods[]|'', path: string|MacchiatoMiddleware, ...middlewares: MacchiatoMiddleware[]) {
+  #on (method: Methods|Methods[]|'', path: string|Handler, ...middlewares: Handler[]) {
     // handle the path arg when passed as middleware.
     if (typeof path !== 'string') {
       middlewares = [path, ...middlewares]
@@ -140,7 +151,7 @@ class Router {
   }
 
   // use given middleware, if and only if, a route is matched.
-  public use (...middlewares: MacchiatoMiddleware[]) {
+  public use (...middlewares: Handler[]) {
     // check middlewares.
     if (middlewares.some(mw => typeof mw !== 'function')) {
       throw new TypeError('".use()" requires a middleware(s) function(s)')
@@ -154,34 +165,44 @@ class Router {
   }
 
   // router middleware which handle a route matching the request.
-  handleRoutes (request: Request, response: Response, next?: Next) {
+  handleRoutes (request: Request|IncomingMessage, response: Response|ServerResponse, next?: Next) {
     return async (context: Context|null = null) => {
+      // orignal path.
+      const originalPath = this.#raw 
+        ? parse(request as IncomingMessage).pathname 
+        : (request as Request).path
+
       // normalize the path.
-      const path = this.#normalizePath(request.path)
+      const path = this.#normalizePath(originalPath)
 
       // ignore favicon request.
       // src: https://github.com/3imed-jaberi/koa-no-favicon/blob/master/index.js
-      // if (/\/favicon\.?(jpe?g|png|ico|gif)?$/i.test(request.path)) { return }
+      // if (/\/favicon\.?(jpe?g|png|ico|gif)?$/i.test(originalPath)) { return }
 
       // init route matched var.
       let route
 
       // have slashs ~ solve trailing slash.
-      if (path !== request.path) {
-        response.status = 301
-        response.redirect(`${path}${request.search}`)
+      if (path !== originalPath) {
+        if (this.#raw) {
+          this.#sendResponse(301, path)(response as Response)
+          return
+        }
+
+        (response as Response).status = 301
+        ;(response as Response).redirect(`${path}${(request as Request).search}`)
         return
       }
 
       // generate the cache key.
-      const requestCacheKey = `${request.method}_${request.path}`
+      const requestCacheKey = `${request.method}_${originalPath}`
       // get the route from the cache.
       route = this.#cache.get(requestCacheKey)
 
       // if the current request not cached.
       if (!route) {        
         // find route inside the routes stack.
-        route = this.#router.find(request.method as Methods, request.path)
+        route = this.#router.find(request.method as Methods, originalPath)
         // put the matched route inside the cache.
         this.#cache.set(requestCacheKey, route)
       }
@@ -197,33 +218,55 @@ class Router {
         if (allowHeaderFiled) {
           // if `OPTIONS` request responds with allowed methods.
           if (request.method === 'OPTIONS') {
-            response.status = 204
-            response.set('Allow', allowHeaderFiled.methods.join(', '))
-            response.body = ''
+            if (this.#raw) {
+              this.#sendResponse(204, '', { 'Allow': allowHeaderFiled.methods.join(', ') })(response)
+              return
+            }
+  
+            (response as Response).status = 204
+            ;(response as Response).set('Allow', allowHeaderFiled.methods.join(', '))
+            ;(response as Response).body = ''
             return
           }
 
           // support 405 method not allowed.
-          response.status = 405
-          response.set('Allow', allowHeaderFiled.methods.join(', '))
-          response.body = `"${request.method}" is not allowed in "${request.path}".`
+          if (this.#raw) {
+            this.#sendResponse(
+              405, 
+              `"${request.method}" is not allowed in "${originalPath}".`,
+              { 'Allow': allowHeaderFiled.methods.join(', ') }
+            )(response)
+            return
+          }
+
+          (response as Response).status = 405
+          ;(response as Response).set('Allow', allowHeaderFiled.methods.join(', '))
+          ;(response as Response).body = `"${request.method}" is not allowed in "${originalPath}".`
           return
         }
 
         // suport 501 path not implemented.
-        response.status = 501
-        response.set('Allow', '')
-        response.write (`"${request.path}" not implemented.`)
-        response.end()
+        if (this.#raw) {
+          this.#sendResponse(
+            501, 
+            `"${originalPath}" not implemented.`,
+            { 'Allow': '' }
+          )(response)
+          return
+        }
+
+        (response as Response).status = 501
+        ;(response as Response).set('Allow', '')
+        ;(response as Response).body= `"${originalPath}" not implemented.`
         return
       }
-      
+
       // check if the route params isn't empty array.      
       request['params'] = routeParams
 
       // add the handler to middlewares stored by the `use` method.
       this.#middlewaresStore.push(handler)
-      
+
       // run the middleware.
       await this.#middlewaresStore.compose(
         ...(!this.#expressify ? [context] : [request, response])
@@ -239,109 +282,35 @@ class Router {
     return this.handleRoutes(context.request, context.response)(context)
   }
 
-  routes () {    
+  #sendResponse(status: number, content: string, headers?: { [key: string]: string }) {
+    return (response: ServerResponse) => {
+      response.statusCode = status
+    
+      if (headers) {
+        for (const key in headers) {
+          response.setHeader(key, headers[key])
+        }
+      }
+
+      if (status === 301) {
+        // TODO: querystring support
+        response.writeHead(301, { Location: `${content}` })
+      } else { response.write(content) }
+
+      response.end()
+      return
+    }
+  }
+
+  rawRoutes ()  {
+    return (request: IncomingMessage, response: ServerResponse) => { this.handleRoutes(request, response)() }
+  }
+
+  routes () {
     return this.#expressify 
       ? (request: Request, response: Response) => { this.#expressifyRoutes(request, response) } 
       : (ctx: Context) => { this.#koaifyRoutes(ctx) }
   }
-
-  // async #rawNodejsRoutes (context: Context, next?: Next) {
-  //   // normalize the path.
-  //   const originalPath = parse(request).pathname
-
-  //   const path = this.#normalizePath(originalPath)
-
-  //   // ignore favicon request.
-  //   // src: https://github.com/3imed-jaberi/koa-no-favicon/blob/master/index.js
-  //   if (/\/favicon\.?(jpe?g|png|ico|gif)?$/i.test(originalPath)) {
-  //     response.statusCode = 404
-  //     response.end()
-  //     return
-  //   }
-
-  //   // init route matched var.
-  //   let route
-
-  //   // have slashs ~ solve trailing slash.
-  //   if (path !== originalPath) {
-  //     response.statusCode = 301
-  //     response.writeHead(302, {
-  //       // TODO: querystring support
-  //       Location: `${path}`
-  //     })
-  //     response.end()
-  //     return
-  //   }
-
-  //   // generate the cache key.
-  //   const requestCacheKey = `${request.method}_${originalPath}`
-  //   // get the route from the cache.
-  //   route = this.#cache.get(requestCacheKey)
-
-  //   // if the current request not cached.
-  //   if (!route) {        
-  //     // find route inside the routes stack.
-  //     route = this.#router.find(request.method as Methods, originalPath)
-  //     // put the matched route inside the cache.
-  //     this.#cache.set(requestCacheKey, route)
-  //   }
-
-  //   // extract the handler func and the params array.
-  //   const { handlers: [handler], params: routeParams } = route
-
-  //   // check the handler func isn't defined.
-  //   if (!handler || handler.length === 0) {
-  //     // get methods exist on allow header.
-  //     const allowHeaderFiled = this.#getAllowHeaderTuple(path)
-
-  //     if (allowHeaderFiled) {
-  //       // if `OPTIONS` request responds with allowed methods.
-  //       if (request.method === 'OPTIONS') {
-  //         response.statusCode = 204
-  //         response.setHeader('Allow', allowHeaderFiled.methods.join(', '))
-  //         response.write('')
-  //         response.end()
-  //         return
-  //       }
-
-  //       // support 405 method not allowed.
-  //       if (this.#throws) {
-  //         response.statusCode = 405
-  //         response.end()
-  //         throw new Error(`"${request.method}" is not allowed in "${originalPath}".`)
-  //       }
-
-  //       response.statusCode = 405
-  //       response.setHeader('Allow', allowHeaderFiled.methods.join(', '))
-  //       response.write (`"${request.method}" is not allowed in "${originalPath}".`)
-  //       response.end()
-
-  //       return
-  //     }
-
-  //     // suport 501 path not implemented.
-  //     if (this.#throws) {
-  //       response.statusCode = 501
-  //       response.end()
-  //       throw new Error(`"${originalPath}" not implemented.`)
-  //     }
-
-  //     response.statusCode = 501
-  //     response.setHeader('Allow', '')
-  //     response.write (`"${originalPath}" not implemented.`)
-  //     response.end()
-  //     return
-  //   }
-    
-  //   // check if the route params isn't empty array.
-  //   request['params'] = routeParams
-
-  //   // wait to all middlewares stored by the `use` method.
-  //   await Promise.all(this.#middlewaresStore)
-  //   await handler(
-  //     ...(!this.#expressify ? [{ request, response }] : [request, response])
-  //   )
-  // }
 }
 
 /**
