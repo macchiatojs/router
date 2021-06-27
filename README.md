@@ -28,7 +28,7 @@
 
 <!-- ***************** -->
 
-### Expressive elegant modern amiable glamorous Macchiato.js Router ⚡.
+### Expressive elegant modern amiable glamorous Macchiato.js Router ⚡ <small> (support also raw Node.js and Koa.js) </small>.
 
 ## `Features`
 
