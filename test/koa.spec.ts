@@ -37,7 +37,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/test')
@@ -52,7 +52,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'post data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .post('/test')
@@ -67,7 +67,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'put data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .put('/test')
@@ -82,7 +82,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'patch data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .patch('/test')
@@ -97,7 +97,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'delete data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .delete('/test')
@@ -113,7 +113,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'delete data' }
       })
 
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       METHODS.forEach((method) => {
         it(method.toLowerCase(), (done) => {
@@ -132,7 +132,7 @@ describe('macchiatojs-router with koa.js', () => {
           .get((ctx: Koa.BaseContext) => { ctx.body = { msg: 'get data' } })
           .post((ctx: Koa.BaseContext) => { ctx.body = { msg: 'post data' } })
   
-        app.use(router.routes())
+        app.use(router.routes() as any)
 
         request(app.listen())
         .get('/test')
@@ -162,7 +162,7 @@ describe('macchiatojs-router with koa.js', () => {
 
       ;(['post','put','delete'] as string[]).forEach(m => { router[m]('/test', () => void 0) })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/test')
@@ -175,11 +175,11 @@ describe('macchiatojs-router with koa.js', () => {
       const router = new Router<Koa.Middleware>({ expressify: false })
       const app = new Koa()
       
-      router.get('/test/:state', (ctx: Koa.BaseContext) => {        
-        ctx.body = { msg: 'get data with ' + ctx.request.params.state + ' as params' }
+      router.get('/test/:state', (ctx: Koa.Context) => {        
+        ctx.body = { msg: 'get data with ' + ctx.request['params'].state + ' as params' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/test/work')
@@ -197,7 +197,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
     
       request(app.listen())
         .get('//test')
@@ -216,7 +216,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
     
       request(app.listen())
         .options('/test')
@@ -234,7 +234,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
     
       request(app.listen())
         .post('/test')
@@ -251,7 +251,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/not-imp-test')
@@ -268,7 +268,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
       const server = app.listen()
       // no cached request.
       request(server)
@@ -295,7 +295,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/test')
@@ -315,7 +315,7 @@ describe('macchiatojs-router with koa.js', () => {
         ctx.body = { msg: 'get data' }
       })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/preRoute/test')
@@ -334,7 +334,7 @@ describe('macchiatojs-router with koa.js', () => {
           ctx.body = { msg: 'get data' }
         })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/preRoute/test')
@@ -350,7 +350,7 @@ describe('macchiatojs-router with koa.js', () => {
       const app = new Koa()
 
       router
-        .use((ctx: Koa.BaseContext, next: Next) => {
+        .use((ctx: any, next: Next) => {
           console.log('logger', ctx.status, ctx.url)
           next()
         })
@@ -359,7 +359,7 @@ describe('macchiatojs-router with koa.js', () => {
           return
         })
   
-      app.use(router.routes())
+      app.use(router.routes() as any)
 
       request(app.listen())
         .get('/test')
@@ -379,7 +379,7 @@ describe('macchiatojs-router with koa.js', () => {
           ctx.body = { msg: 'get data' }
         })
     
-        app.use(router.routes())
+        app.use(router.routes() as any)
       })
     })
   })
