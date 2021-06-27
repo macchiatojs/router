@@ -1,5 +1,12 @@
 # CHANGE LOG
 
+### v0.5.0 (28 Jun 2021)
+
+- fix handleRoutes method by make it as private.
+- add export default for CommonJS
+- add support for Koa.js (js + ts)
+- update README.md
+
 ### v0.4.0 (26 Jun 2021)
 
 - add `parseurl` as peerDep
