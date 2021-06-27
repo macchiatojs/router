@@ -17,15 +17,15 @@ describe('macchiatojs-router with koa style', () => {
       assert.strictEqual(typeof new Router({ expressify: false }), 'object')
     })
 
-    // it('should not return private props/method', () => {
-    //   assert.deepStrictEqual(
-    //     Object.getOwnPropertyNames(Router.prototype),
-    //     [
-    //       'constructor', 'get', 'post', 'put', 'patch',
-    //       'delete', 'all', 'prefix', 'route', 'use', 'routes'
-    //     ]
-    //   )
-    // })
+    it('should not return private props/method', () => {
+      assert.deepStrictEqual(
+        Object.getOwnPropertyNames(Router.prototype),
+        [
+          'constructor', 'get', 'post', 'put', 'patch',
+          'delete', 'all', 'prefix', 'route', 'use', 'rawRoutes', 'routes'
+        ]
+      )
+    })
   })
 
   describe('http verbs/methods', () => {
@@ -175,7 +175,6 @@ describe('macchiatojs-router with koa style', () => {
       const app = new Kernel({ expressify: false })
       
       router.get('/test/:state', ({ request, response }: Context) => {
-        console.log(request.query);
         response.body = { msg: 'get data with ' + request['params'].state + ' as params' }
       })
   

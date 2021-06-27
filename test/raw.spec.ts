@@ -21,15 +21,15 @@ describe('macchiatojs-router with express/connect style', () => {
       assert.strictEqual(typeof new Router({ raw: true }), 'object')
     })
 
-    // it('should not return private props/method', () => {
-    //   assert.deepStrictEqual(
-    //     Object.getOwnPropertyNames(Router.prototype),
-    //     [
-    //       'constructor', 'get', 'post', 'put', 'patch',
-    //       'delete', 'all', 'prefix', 'route', 'use', 'routes'
-    //     ]
-    //   )
-    // })
+    it('should not return private props/method', () => {
+      assert.deepStrictEqual(
+        Object.getOwnPropertyNames(Router.prototype),
+        [
+          'constructor', 'get', 'post', 'put', 'patch',
+          'delete', 'all', 'prefix', 'route', 'use', 'rawRoutes', 'routes'
+        ]
+      )
+    })
   })
 
   describe('http verbs/methods', () => {
@@ -405,6 +405,24 @@ describe('macchiatojs-router with express/connect style', () => {
   
         router
         .use('bad args' as any)
+        .get('/test', (
+          request: IncomingMessage,
+          response: ServerResponse
+        ) => { handler(request, response)('get') })
+    
+        const server = http.createServer(router.rawRoutes())
+
+        server.listen()
+      })
+    })
+  })
+
+  describe('rawRoutes method', () => {
+    it('should throw when don\'t set the raw option to true', () => {
+      assert.throws(() => { 
+        const router = new Router()
+
+        router
         .get('/test', (
           request: IncomingMessage,
           response: ServerResponse
