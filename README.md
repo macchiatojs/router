@@ -34,7 +34,7 @@
 
 - 🦄 Based on top of [Trouter][trouter].
 - 🚀 Isomorphic to the moon.
-- 💅🏻 Express-style routing (`app.get`, `app.post`, `app.put`, `app.delete`, etc.)
+- 💅🏻 Express-style routing (`_.get`, `_.post`, `_.put`, `_.patch`, `_.delete`, etc.)
 - 🔥 Blaze and lightweight router.
 - ⚖️ Tiny Bundle.
 - 🪁 Named URL parameters.
@@ -45,6 +45,7 @@
 - ❌ Support for `501 Path Not Implemented`.
 - 🧼 Support `trailing slash` and `fixed path` by automatic redirection.
 - ✨ Asynchronous support (`async/await`).
+- 🐱‍👤 Support `Koa.js` and all framework which have the same behave.
 - 🐢 Raw Node.js (`http`) support.
 - 🎉 TypeScript support.
 
@@ -93,10 +94,32 @@ router.get("/hello", (request: IncomingMessage, response: ServerResponse) => {
 
 const server = http.createServer(router.rawRoutes());
 
-app.server(2222);
+app.listen(2222);
+```
+
+with Koa.js
+
+```typescript
+import Koa from "koa";
+import Router from "@macchiatojs/router";
+
+const app = new Koa();
+const router = new Router<Koa.Middleware>({ expressify: false });
+
+router.get("/hello", (ctx: Koa.BaseContext) => {
+  ctx.body = "Hello World !";
+});
+
+app.use(router.routes());
+
+app.listen(2222);
 ```
 
 ## `API`
+
+### Note:
+
+> We use `@macchiatojs/kernel` (needed only when use TypeScript and/or Macchiato.js), `parseurl` (needed only when use raw Node.js), `@types/koa` (needed only when use TypeScript) and `koa` (needed only when use Koa.js) as peerDependencies.
 
 ### new Router(options?)
 
@@ -192,11 +215,11 @@ Use given middleware(s). Currently, use middleware(s) for all paths of router is
 
 ### router.routes()
 
-Returns router middleware which handle a route matching the request for Macchiato.js.
+Returns router middleware which handle a route matching the request for `Macchiato.js` and `Koa.js`.
 
 ### router.rawRoutes()
 
-Returns router middleware which handle a route matching the request for raw Node.js.
+Returns router middleware which handle a route matching the request for `raw Node.js`.
 
 ## `Support`
 
