@@ -19,6 +19,7 @@ import Middleware from '@macchiatojs/middleware'
 import Trouter, { Methods } from 'trouter'
 import hashlruCache from 'hashlru'
 import parse from 'parseurl'
+import Koa from 'koa'
 
 export type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
 export type Handler = MacchiatoMiddleware|rawHandler
@@ -29,11 +30,11 @@ export type Handler = MacchiatoMiddleware|rawHandler
  * @api public
  */
 
-class Router {
+class Router<THandler = Handler> {
   // init attributes.
   #raw: boolean
   #expressify: boolean
-  #router: Trouter
+  #router: Trouter<THandler>
   #METHODS: Methods[]
   #routePrefix: string
   #routePath?: string
@@ -46,7 +47,7 @@ class Router {
     // init attributes.
     this.#raw = options.raw ?? false
     this.#expressify = options.expressify ?? true
-    this.#router = new Trouter<Handler>()
+    this.#router = new Trouter<THandler>()
     this.#METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
     this.#routePrefix = options.prefix || '/'
     this.#routePath = undefined
@@ -55,7 +56,7 @@ class Router {
       ? new Middleware<IncomingMessage, ServerResponse>()
       : this.#expressify
         ? new Middleware<Request, Response>()
-        : new KoaifyMiddleware<Context>()
+        : new KoaifyMiddleware<Context|Koa.Context>()
     )
     this.#cache = hashlruCache(1000)
     this.#allowHeaderStore = [] // [{ path: '', methods: [] }]
@@ -76,7 +77,7 @@ class Router {
   }
 
   // register route with specific method.
-  #on (method: Methods|Methods[]|'', path: string|Handler, ...middlewares: Handler[]) {
+  #on (method: Methods|Methods[]|'', path: string|THandler, ...middlewares: THandler[]) {
     // handle the path arg when passed as middleware.
     if (typeof path !== 'string') {
       middlewares = [path, ...middlewares]
@@ -165,8 +166,8 @@ class Router {
   }
 
   // router middleware which handle a route matching the request.
-  handleRoutes (request: Request|IncomingMessage, response: Response|ServerResponse, next?: Next) {
-    return async (context: Context|null = null) => {
+  #handleRoutes (request: Request|Koa.Request|IncomingMessage, response: Response|Koa.Response|ServerResponse, next?: Next) {
+    return async (context: Context|Koa.Context|null = null) => {
       // orignal path.
       const originalPath = this.#raw 
         ? parse(request as IncomingMessage).pathname 
@@ -219,7 +220,7 @@ class Router {
           // if `OPTIONS` request responds with allowed methods.
           if (request.method === 'OPTIONS') {
             if (this.#raw) {
-              this.#sendResponse(204, '', { 'Allow': allowHeaderFiled.methods.join(', ') })(response)
+              this.#sendResponse(204, '', { 'Allow': allowHeaderFiled.methods.join(', ') })(response as ServerResponse)
               return
             }
   
@@ -235,7 +236,7 @@ class Router {
               405, 
               `"${request.method}" is not allowed in "${originalPath}".`,
               { 'Allow': allowHeaderFiled.methods.join(', ') }
-            )(response)
+            )(response as ServerResponse)
             return
           }
 
@@ -247,11 +248,10 @@ class Router {
 
         // suport 501 path not implemented.
         if (this.#raw) {
-          this.#sendResponse(
-            501, 
+          this.#sendResponse(501, 
             `"${originalPath}" not implemented.`,
             { 'Allow': '' }
-          )(response)
+          )(response as ServerResponse)
           return
         }
 
@@ -261,7 +261,7 @@ class Router {
         return
       }
 
-      // check if the route params isn't empty array.      
+      // put the params object inside the request.
       request['params'] = routeParams
 
       // add the handler to middlewares stored by the `use` method.
@@ -275,11 +275,11 @@ class Router {
   }
 
   #expressifyRoutes (request: Request, response: Response) {
-    this.handleRoutes(request, response)()
+    this.#handleRoutes(request, response)()
   }
 
-  #koaifyRoutes (context: Context, next?: Next)  {
-    return this.handleRoutes(context.request, context.response)(context)
+  #koaifyRoutes (context: Context|Koa.Context, next?: Next)  {
+    return this.#handleRoutes(context.request, context.response)(context)
   }
 
   #sendResponse(status: number, content: string, headers?: { [key: string]: string }) {
@@ -303,13 +303,14 @@ class Router {
   }
 
   rawRoutes ()  {
-    return (request: IncomingMessage, response: ServerResponse) => { this.handleRoutes(request, response)() }
+    if (!this.#raw) throw new Error('`.rawRoutes` used only with raw Node.js server')
+    return (request: IncomingMessage, response: ServerResponse) => { this.#handleRoutes(request, response)() }
   }
 
   routes () {
     return this.#expressify 
       ? (request: Request, response: Response) => { this.#expressifyRoutes(request, response) } 
-      : (ctx: Context) => { this.#koaifyRoutes(ctx) }
+      : (ctx: Context|Koa.Context) => { this.#koaifyRoutes(ctx) }
   }
 }
 
@@ -318,3 +319,6 @@ class Router {
  */
 
 export default Router
+
+// Support CommonJS
+module.exports = Router
