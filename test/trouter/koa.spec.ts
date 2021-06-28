@@ -1,8 +1,8 @@
 import request from 'supertest'
 import assert from 'assert'
 import Koa from 'koa'
-import Router from '../src'
 import { Next } from '@macchiatojs/kernel'
+import Router from '../../src'
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 

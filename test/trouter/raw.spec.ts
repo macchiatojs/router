@@ -2,7 +2,7 @@ import { Next } from '@macchiatojs/kernel';
 import request from 'supertest'
 import assert from 'assert'
 import http, { IncomingMessage, ServerResponse } from 'http'
-import Router from '../src'
+import Router from '../../src'
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
