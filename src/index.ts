@@ -12,11 +12,12 @@
  * Module dependencies.
  */
 
-import { Context, Next, Request, Response, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
+import { Context, Request, Response, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
 import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
 import { IncomingMessage, ServerResponse } from 'http'
 import Middleware from '@macchiatojs/middleware'
 import Trouter, { Methods } from 'trouter'
+import TrekRouter from 'trek-router'
 import hashlruCache from 'hashlru'
 import parse from 'parseurl'
 import Koa from 'koa'
@@ -34,7 +35,7 @@ class Router<THandler = Handler> {
   // init attributes.
   #raw: boolean
   #expressify: boolean
-  #router: Trouter<THandler>
+  #router: TrekRouter|Trouter<THandler>
   #METHODS: Methods[]
   #routePrefix: string
   #routePath?: string
@@ -43,11 +44,11 @@ class Router<THandler = Handler> {
   #allowHeaderStore: any
   
   // init Router.
-  constructor (options: { raw?: boolean, expressify?: boolean, prefix?: string } = {}) {
+  constructor (options: { raw?: boolean, expressify?: boolean, trek?: boolean, prefix?: string } = {}) {
     // init attributes.
     this.#raw = options.raw ?? false
     this.#expressify = options.expressify ?? true
-    this.#router = new Trouter<THandler>()
+    this.#router = options.trek ? new TrekRouter() : new Trouter<THandler>()
     this.#METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
     this.#routePrefix = options.prefix || '/'
     this.#routePath = undefined
@@ -165,8 +166,28 @@ class Router<THandler = Handler> {
     return this
   }
 
+  // normalize route from trouter and trek-router.
+  #routeFactory(route) {    
+    if (Array.isArray(route)) {
+      const [handler, routeParams] = route
+      const params = {}
+
+      // parse the params if exist.
+      if (Array.isArray(routeParams) && routeParams.length > 0) {
+        routeParams.forEach(({ name: key, value }) => { params[key] = value })
+      }
+
+      return [handler, params]
+    }
+
+    return [route.handlers[0], route.params]
+  }
+
   // router middleware which handle a route matching the request.
-  #handleRoutes (request: Request|Koa.Request|IncomingMessage, response: Response|Koa.Response|ServerResponse, next?: Next) {
+  #handleRoutes (
+    request: Request|Koa.Request|IncomingMessage,
+    response: Response|Koa.Response|ServerResponse
+  ) {
     return async (context: Context|Koa.Context|null = null) => {
       // orignal path.
       const originalPath = this.#raw 
@@ -180,9 +201,6 @@ class Router<THandler = Handler> {
       // src: https://github.com/3imed-jaberi/koa-no-favicon/blob/master/index.js
       // if (/\/favicon\.?(jpe?g|png|ico|gif)?$/i.test(originalPath)) { return }
 
-      // init route matched var.
-      let route
-
       // have slashs ~ solve trailing slash.
       if (path !== originalPath) {
         if (this.#raw) {
@@ -194,6 +212,9 @@ class Router<THandler = Handler> {
         ;(response as Response).redirect(`${path}${(request as Request).search}`)
         return
       }
+
+      // init route matched var.
+      let route
 
       // generate the cache key.
       const requestCacheKey = `${request.method}_${originalPath}`
@@ -209,7 +230,7 @@ class Router<THandler = Handler> {
       }
 
       // extract the handler func and the params array.
-      const { handlers: [handler], params: routeParams } = route
+      const [handler, routeParams] = this.#routeFactory(route)
 
       // check the handler func isn't defined.
       if (!handler || handler.length === 0) {
@@ -278,7 +299,7 @@ class Router<THandler = Handler> {
     this.#handleRoutes(request, response)()
   }
 
-  #koaifyRoutes (context: Context|Koa.Context, next?: Next)  {
+  #koaifyRoutes (context: Context|Koa.Context)  {
     return this.#handleRoutes(context.request, context.response)(context)
   }
 
@@ -293,9 +314,10 @@ class Router<THandler = Handler> {
       }
 
       if (status === 301) {
-        // TODO: querystring support
         response.writeHead(301, { Location: `${content}` })
-      } else { response.write(content) }
+      } else { 
+        response.write(content)
+      }
 
       response.end()
       return
@@ -303,7 +325,10 @@ class Router<THandler = Handler> {
   }
 
   rawRoutes ()  {
-    if (!this.#raw) throw new Error('`.rawRoutes` used only with raw Node.js server')
+    if (!this.#raw) {
+      throw new Error('`.rawRoutes` used only with raw Node.js server')
+    }
+
     return (request: IncomingMessage, response: ServerResponse) => { this.#handleRoutes(request, response)() }
   }
 
