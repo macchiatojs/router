@@ -25,6 +25,7 @@
 [code-size-badge]: https://img.shields.io/github/languages/code-size/macchiatojs/router
 [pr-welcoming-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat
 [trouter]: https://github.com/lukeed/trouter
+[trek-router]: https://github.com/trekjs/router
 
 <!-- ***************** -->
 
@@ -32,7 +33,7 @@
 
 ## `Features`
 
-- 🦄 Based on top of [Trouter][trouter].
+- 🦄 Based on top of [Trouter][trouter] and/or [Trek Router][trek-router].
 - 🚀 Isomorphic to the moon.
 - 💅🏻 Express-style routing (`_.get`, `_.post`, `_.put`, `_.patch`, `_.delete`, etc.)
 - 🔥 Blaze and lightweight router.
@@ -67,7 +68,9 @@ import Macchiato, { Request, Response } from "@macchiatojs/kernel";
 import Router from "@macchiatojs/router";
 
 const app = new Macchiato();
-const router = new Router();
+const router = new Router(); // use trouter
+// >>> some benchs say that trek-router have better perf than trouter. <<< //
+// const router = new Router({ trek: true }); // use trek-router
 
 router.get("/hello", (request: Request, response: Response) => {
   response.body = "Hello World";
@@ -131,6 +134,7 @@ Create a new router.
 | [options.prefix]     | `String`  | prefix router paths                                                                            |
 | [options.expressify] | `Boolean` | use `express/connect style` when is `true` and `koa style` when is `false` (default to `true`) |
 | [options.raw]        | `Boolean` | use `raw Node.js server` when is `true` (default to `false`)                                   |
+| [options.trek]       | `Boolean` | use `trek-router` when is `true` and `trouter` when is `false` (default to `false`)            |
 
 ### router.get|post|put|patch|delete|all(path, handler)
 
