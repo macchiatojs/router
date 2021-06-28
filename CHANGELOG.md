@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+### v0.6.0 (28 Jun 2021)
+
+- add `trek-router`.
+- update README.md
+
 ### v0.5.0 (28 Jun 2021)
 
 - fix handleRoutes method by make it as private.
