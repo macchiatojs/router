@@ -95,7 +95,7 @@ class Router<THandler = Handler> {
     // stock to allow header store with unique val array.
     this.#allowHeaderStore = [...new Map([
       ...this.#allowHeaderStore,
-      { path, methods: !allow ? [method] : [...new Set([...allow.methods, method])] }
+     { path, methods: !allow ? [method] : [...new Set([...allow.methods, method])] }
     ].map(item => [item.path, item])).values()]
 
     // register to route to the trouter stack.
@@ -167,7 +167,7 @@ class Router<THandler = Handler> {
   }
 
   // normalize route from trouter and trek-router.
-  #routeFactory(route) {    
+  #routeFactory (route) {    
     if (Array.isArray(route)) {
       const [handler, routeParams] = route
       const params = {}
@@ -256,7 +256,7 @@ class Router<THandler = Handler> {
             this.#sendResponse(
               405, 
               `"${request.method}" is not allowed in "${originalPath}".`,
-              { 'Allow': allowHeaderFiled.methods.join(', ') }
+             { 'Allow': allowHeaderFiled.methods.join(', ') }
             )(response as ServerResponse)
             return
           }
@@ -271,7 +271,7 @@ class Router<THandler = Handler> {
         if (this.#raw) {
           this.#sendResponse(501, 
             `"${originalPath}" not implemented.`,
-            { 'Allow': '' }
+           { 'Allow': '' }
           )(response as ServerResponse)
           return
         }
@@ -299,11 +299,11 @@ class Router<THandler = Handler> {
     this.#handleRoutes(request, response)()
   }
 
-  #koaifyRoutes (context: Context|Koa.Context)  {
+  #koaifyRoutes (context: Context|Koa.Context) {
     return this.#handleRoutes(context.request, context.response)(context)
   }
 
-  #sendResponse(status: number, content: string, headers?: { [key: string]: string }) {
+  #sendResponse (status: number, content: string, headers?: { [key: string]: string }) {
     return (response: ServerResponse) => {
       response.statusCode = status
     
@@ -324,7 +324,7 @@ class Router<THandler = Handler> {
     }
   }
 
-  rawRoutes ()  {
+  rawRoutes () {
     if (!this.#raw) {
       throw new Error('`.rawRoutes` used only with raw Node.js server')
     }
