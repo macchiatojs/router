@@ -12,18 +12,24 @@
  * Module dependencies.
  */
 
-import { Context, Request, Response, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
-import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
-import { IncomingMessage, ServerResponse } from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { Context, Request, Response, KeyValueObject, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
 import Middleware from '@macchiatojs/middleware'
-import Trouter, { Methods } from 'trouter'
+import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
+import Trouter from 'trouter'
+import type { Methods } from 'trouter'
 import TrekRouter from 'trek-router'
 import hashlruCache from 'hashlru'
 import parse from 'parseurl'
 import Koa from 'koa'
 
-export type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
-export type Handler = MacchiatoMiddleware|rawHandler
+// TODO: try to replace rawHandler with RequestListener
+type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
+type Handler = MacchiatoMiddleware|rawHandler
+type MiddlewareStore = Middleware<IncomingMessage, ServerResponse>|Middleware<Request, Response>|KoaifyMiddleware<Context>|KoaifyMiddleware<Koa.Context>
+type NormalizedRoute = [Handler, KeyValueObject<string>]
+type Route = { params: Record<string, string>, handlers: Handler[] }| NormalizedRoute
+type AllowHeaderStore = { path: string; methods: (string | Methods[])[]; }
 
 /**
  * Isomorphic Router for Macchiato.js.
@@ -39,9 +45,11 @@ class Router<THandler = Handler> {
   #METHODS: Methods[]
   #routePrefix: string
   #routePath?: string
-  #middlewaresStore: any
-  #cache: any
-  #allowHeaderStore: any
+  // FIXME: fix MiddlewareStore type
+  #middlewaresStore: MiddlewareStore|any
+  // TODO: add cache types
+  #cache: any 
+  #allowHeaderStore: AllowHeaderStore[]
   
   // init Router.
   constructor (options: { raw?: boolean, expressify?: boolean, trek?: boolean, prefix?: string } = {}) {
@@ -64,7 +72,7 @@ class Router<THandler = Handler> {
   }
 
   // normalize the path by remove all trailing slash.
-  #normalizePath (path: string) {    
+  #normalizePath (path: string): string {    
     path = path.replace(/\/\/+/g, '/')
     if (path !== '/' && path.slice(-1) === '/') {
       path = path.slice(0, -1)
@@ -73,16 +81,16 @@ class Router<THandler = Handler> {
   }
 
   // get allow header for specific path.
-  #getAllowHeaderTuple (path: string) {
-    return this.#allowHeaderStore.find(allow => allow.path === path)
+  #getAllowHeaderTuple (path: string): AllowHeaderStore {
+    return this.#allowHeaderStore.find(allow => allow.path === path) as AllowHeaderStore
   }
 
   // register route with specific method.
-  #on (method: Methods|Methods[]|'', path: string|THandler, ...middlewares: THandler[]) {
+  #on (method: Methods|Methods[]|'', path: string|THandler, ...middlewares: THandler[]): this {
     // handle the path arg when passed as middleware.
     if (typeof path !== 'string') {
       middlewares = [path, ...middlewares]
-      path = this.#routePath as any
+      path = this.#routePath as string
     }
 
     // normalize the path.
@@ -101,50 +109,50 @@ class Router<THandler = Handler> {
     // register to route to the trouter stack.
     if (Array.isArray(method)) method = ''
 
-    this.#router.add(method as any, path, ...middlewares)
+    this.#router.add(method as string, path, ...middlewares)
 
     // give access to other method after use the current one.
     return this
   }
 
   // register route with get method.
-  public get (path, ...middlewares) {
+  public get (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on('GET', path, ...middlewares)
   }
 
   // register route with post method.
-  public post (path, ...middlewares) {
+  public post (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on('POST', path, ...middlewares)
   }
 
   // register route with put method.
-  public put (path, ...middlewares) {
+  public put (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on('PUT', path, ...middlewares)
   }
 
   // register route with patch method.
-  public patch (path, ...middlewares) {
+  public patch (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on('PATCH', path, ...middlewares)
   }
 
   // register route with delete method.
-  public delete (path, ...middlewares) {
+  public delete (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on('DELETE', path, ...middlewares)
   }
 
   // `router.all()` method >> register route with all methods.
-  public all (path, ...middlewares) {
+  public all (path: string|THandler, ...middlewares: THandler[]): this {
     return this.#on(this.#METHODS, path, ...middlewares)
   }
 
   // add prefix to route path.
-  public prefix (prefix: string) {
+  public prefix (prefix: string): this {
     this.#routePrefix = prefix
     return this
   }
 
   // give access to write once the path of route.
-  public route (path: string) {
+  public route (path: string): this {
     // update the route-path.
     this.#routePath = path
 
@@ -153,7 +161,7 @@ class Router<THandler = Handler> {
   }
 
   // use given middleware, if and only if, a route is matched.
-  public use (...middlewares: Handler[]) {
+  public use (...middlewares: Handler[]): this {
     // check middlewares.
     if (middlewares.some(mw => typeof mw !== 'function')) {
       throw new TypeError('".use()" requires a middleware(s) function(s)')
@@ -167,7 +175,7 @@ class Router<THandler = Handler> {
   }
 
   // normalize route from trouter and trek-router.
-  #routeFactory (route) {    
+  #routeFactory (route: Route): NormalizedRoute {    
     if (Array.isArray(route)) {
       const [handler, routeParams] = route
       const params = {}
@@ -188,7 +196,7 @@ class Router<THandler = Handler> {
     request: Request|Koa.Request|IncomingMessage,
     response: Response|Koa.Response|ServerResponse
   ) {
-    return async (context: Context|Koa.Context|null = null) => {
+    return async (context: Context|Koa.Context|null = null): Promise<void> => {
       // orignal path.
       const originalPath = this.#raw 
         ? parse(request as IncomingMessage).pathname 
@@ -204,7 +212,7 @@ class Router<THandler = Handler> {
       // have slashs ~ solve trailing slash.
       if (path !== originalPath) {
         if (this.#raw) {
-          this.#sendResponse(301, path)(response as Response)
+          this.#sendResponse(301, path)(response as ServerResponse)
           return
         }
 
@@ -295,16 +303,16 @@ class Router<THandler = Handler> {
     }
   }
 
-  #expressifyRoutes (request: Request, response: Response) {
-    this.#handleRoutes(request, response)()
+  #expressifyRoutes (request: Request, response: Response): Promise<void> {
+    return this.#handleRoutes(request, response)()
   }
 
-  #koaifyRoutes (context: Context|Koa.Context) {
+  #koaifyRoutes (context: Context|Koa.Context): Promise<void> {
     return this.#handleRoutes(context.request, context.response)(context)
   }
 
-  #sendResponse (status: number, content: string, headers?: { [key: string]: string }) {
-    return (response: ServerResponse) => {
+  #sendResponse (status: number, content: string, headers?: KeyValueObject<string>) {
+    return (response: ServerResponse): void => {
       response.statusCode = status
     
       if (headers) {
@@ -324,7 +332,7 @@ class Router<THandler = Handler> {
     }
   }
 
-  rawRoutes () {
+  rawRoutes (): rawHandler {
     if (!this.#raw) {
       throw new Error('`.rawRoutes` used only with raw Node.js server')
     }
@@ -332,7 +340,7 @@ class Router<THandler = Handler> {
     return (request: IncomingMessage, response: ServerResponse) => { this.#handleRoutes(request, response)() }
   }
 
-  routes () {
+  routes (): MacchiatoMiddleware {
     return this.#expressify 
       ? (request: Request, response: Response) => { this.#expressifyRoutes(request, response) } 
       : (ctx: Context|Koa.Context) => { this.#koaifyRoutes(ctx) }
