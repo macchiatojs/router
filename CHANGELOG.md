@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+### v0.7.0 (22 Aug 2021)
+
+- fix and improve types.
+- update deps
+
 ### v0.6.0 (28 Jun 2021)
 
 - add `trek-router`.
