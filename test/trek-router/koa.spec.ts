@@ -311,7 +311,7 @@ describe('macchiatojs-router with koa.js', () => {
       const router = new Router({ trek: true, expressify: false, prefix: '/preRoute' })
       const app = new Koa()
       
-      router.get('/test', (ctx: Koa.BaseContext) => {
+      router.get('/test', (ctx: any) => {
         ctx.body = { msg: 'get data' }
       })
   

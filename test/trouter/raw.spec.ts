@@ -3,6 +3,7 @@ import request from 'supertest'
 import assert from 'assert'
 import http, { IncomingMessage, ServerResponse } from 'http'
 import Router from '../../src'
+import type { RequestListener } from 'node:http';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
@@ -41,7 +42,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
  
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .get('/test')
@@ -57,7 +58,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('post') })
 
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .post('/test')
@@ -73,7 +74,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('put') })
 
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .put('/test')
@@ -89,7 +90,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('patch') })
 
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .patch('/test')
@@ -105,7 +106,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('delete') })
 
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .delete('/test')
@@ -121,7 +122,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('all') })
 
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       server.listen()
 
@@ -148,7 +149,7 @@ describe('macchiatojs-router with express/connect style', () => {
             response: ServerResponse
           ) => { handler(request, response)('post') })
   
-        const server = http.createServer(router.rawRoutes())
+        const server = http.createServer(router.rawRoutes() as RequestListener)
         server.listen()
 
         request(server)
@@ -179,7 +180,7 @@ describe('macchiatojs-router with express/connect style', () => {
 
       ;(['post','put','delete'] as string[]).forEach(m => { router[m]('/test', () => void 0) })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .get('/test')
@@ -198,7 +199,7 @@ describe('macchiatojs-router with express/connect style', () => {
         handler(request, response)('get with ' + request['params'].state + ' as')
       })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .get('/test/work')
@@ -216,7 +217,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
     
       request(server.listen())
         .get('//test')
@@ -235,7 +236,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
     
       request(server.listen())
         .options('/test')
@@ -253,7 +254,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
     
       request(server.listen())
         .post('/test')
@@ -270,7 +271,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .get('/not-imp-test')
@@ -287,7 +288,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
       
       server.listen()
 
@@ -316,7 +317,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       request(server.listen())
         .get('/test')
@@ -336,7 +337,7 @@ describe('macchiatojs-router with express/connect style', () => {
         response: ServerResponse
       ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       server.listen()
 
@@ -357,7 +358,7 @@ describe('macchiatojs-router with express/connect style', () => {
         ) => { handler(request, response)('get') })
       
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       server.listen()
 
@@ -387,7 +388,7 @@ describe('macchiatojs-router with express/connect style', () => {
           response: ServerResponse
         ) => { handler(request, response)('get') })
   
-      const server = http.createServer(router.rawRoutes())
+      const server = http.createServer(router.rawRoutes() as RequestListener)
 
       server.listen()
 
@@ -410,7 +411,7 @@ describe('macchiatojs-router with express/connect style', () => {
           response: ServerResponse
         ) => { handler(request, response)('get') })
     
-        const server = http.createServer(router.rawRoutes())
+        const server = http.createServer(router.rawRoutes() as RequestListener)
 
         server.listen()
       })
@@ -428,7 +429,7 @@ describe('macchiatojs-router with express/connect style', () => {
           response: ServerResponse
         ) => { handler(request, response)('get') })
     
-        const server = http.createServer(router.rawRoutes())
+        const server = http.createServer(router.rawRoutes() as RequestListener)
 
         server.listen()
       })
