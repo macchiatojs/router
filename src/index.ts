@@ -13,7 +13,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { Context, Request, Response, KeyValueObject, MacchiatoMiddleware, ExpressStyleMiddleware } from '@macchiatojs/kernel'
+import type { Context, Request, Response, KeyValueObject, MacchiatoHandler, ExpressStyleHandler } from '@macchiatojs/kernel'
 import Middleware from '@macchiatojs/middleware'
 import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
 import Trouter from 'trouter'
@@ -30,8 +30,8 @@ import type {
 /**
  * @types
  */
-type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
-type Handler = MacchiatoMiddleware|rawHandler
+type rawHandler = ExpressStyleHandler<IncomingMessage, ServerResponse>
+type Handler = MacchiatoHandler|rawHandler
 type MiddlewareStore = Middleware<IncomingMessage, ServerResponse>|Middleware<Request, Response>|KoaifyMiddleware<Context>|KoaifyMiddleware<KoaContext>
 type NormalizedRoute = [Handler, KeyValueObject<string>]
 type Route = { params: Record<string, string>, handlers: Handler[] }| NormalizedRoute
@@ -346,7 +346,7 @@ class Router<THandler = Handler> {
     return (request: IncomingMessage, response: ServerResponse) => { this.#handleRoutes(request, response)() }
   }
 
-  routes (): MacchiatoMiddleware {
+  routes (): MacchiatoHandler {
     return this.#expressify 
       ? (request: Request, response: Response) => { this.#expressifyRoutes(request, response) } 
       : (ctx: Context|KoaContext) => { this.#koaifyRoutes(ctx) }
