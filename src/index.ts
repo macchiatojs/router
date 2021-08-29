@@ -21,12 +21,18 @@ import type { Methods } from 'trouter'
 import TrekRouter from 'trek-router'
 import hashlruCache from 'hashlru'
 import parse from 'parseurl'
-import Koa from 'koa'
+import type { 
+  Request as KoaRequest,
+  Response as KoaResponse,
+  Context as KoaContext
+} from 'koa'
 
-// TODO: try to replace rawHandler with RequestListener
+/**
+ * @types
+ */
 type rawHandler = ExpressStyleMiddleware<IncomingMessage, ServerResponse>
 type Handler = MacchiatoMiddleware|rawHandler
-type MiddlewareStore = Middleware<IncomingMessage, ServerResponse>|Middleware<Request, Response>|KoaifyMiddleware<Context>|KoaifyMiddleware<Koa.Context>
+type MiddlewareStore = Middleware<IncomingMessage, ServerResponse>|Middleware<Request, Response>|KoaifyMiddleware<Context>|KoaifyMiddleware<KoaContext>
 type NormalizedRoute = [Handler, KeyValueObject<string>]
 type Route = { params: Record<string, string>, handlers: Handler[] }| NormalizedRoute
 type AllowHeaderStore = { path: string; methods: (string | Methods[])[]; }
@@ -65,7 +71,7 @@ class Router<THandler = Handler> {
       ? new Middleware<IncomingMessage, ServerResponse>()
       : this.#expressify
         ? new Middleware<Request, Response>()
-        : new KoaifyMiddleware<Context|Koa.Context>()
+        : new KoaifyMiddleware<Context|KoaContext>()
     )
     this.#cache = hashlruCache(1000)
     this.#allowHeaderStore = [] // [{ path: '', methods: [] }]
@@ -193,10 +199,10 @@ class Router<THandler = Handler> {
 
   // router middleware which handle a route matching the request.
   #handleRoutes (
-    request: Request|Koa.Request|IncomingMessage,
-    response: Response|Koa.Response|ServerResponse
+    request: Request|KoaRequest|IncomingMessage,
+    response: Response|KoaResponse|ServerResponse
   ) {
-    return async (context: Context|Koa.Context|null = null): Promise<void> => {
+    return async (context: Context|KoaContext|null = null): Promise<void> => {
       // orignal path.
       const originalPath = this.#raw 
         ? parse(request as IncomingMessage).pathname 
@@ -307,7 +313,7 @@ class Router<THandler = Handler> {
     return this.#handleRoutes(request, response)()
   }
 
-  #koaifyRoutes (context: Context|Koa.Context): Promise<void> {
+  #koaifyRoutes (context: Context|KoaContext): Promise<void> {
     return this.#handleRoutes(context.request, context.response)(context)
   }
 
@@ -343,7 +349,7 @@ class Router<THandler = Handler> {
   routes (): MacchiatoMiddleware {
     return this.#expressify 
       ? (request: Request, response: Response) => { this.#expressifyRoutes(request, response) } 
-      : (ctx: Context|Koa.Context) => { this.#koaifyRoutes(ctx) }
+      : (ctx: Context|KoaContext) => { this.#koaifyRoutes(ctx) }
   }
 }
 
