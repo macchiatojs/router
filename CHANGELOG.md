@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+### v0.8.0 (29 Aug 2021)
+
+- fix and improve types.
+- update deps
+
 ### v0.7.0 (22 Aug 2021)
 
 - fix and improve types.
