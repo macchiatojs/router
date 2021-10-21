@@ -18,6 +18,7 @@ import Middleware from '@macchiatojs/middleware'
 import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
 import Trouter from 'trouter'
 import type { Methods } from 'trouter'
+// TODO: add trek-router ts types
 import TrekRouter from 'trek-router'
 import hashlruCache from 'hashlru'
 import parse from 'parseurl'
