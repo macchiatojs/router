@@ -1,6 +1,6 @@
 {
   "name": "@macchiatojs/router",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Expressive elegant modern amiable Router for raw Node.js/Macchiato.js/Koa.js ⚡.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -50,38 +50,38 @@
     "url": "https://www.3imed-jaberi.com"
   },
   "dependencies": {
-    "@macchiatojs/koaify-middleware": "^0.1.0",
-    "@macchiatojs/middleware": "^0.1.0",
+    "@macchiatojs/koaify-middleware": "^0.2.0",
+    "@macchiatojs/middleware": "^0.2.0",
     "hashlru": "^2.3.0",
     "trek-router": "^1.2.0",
     "trouter": "^3.2.0"
   },
   "peerDependencies": {
-    "@macchiatojs/kernel": "^0.13.0",
+    "@macchiatojs/kernel": "^0.17.1",
     "@types/koa": "^2.13.4",
-    "koa": "^2.13.1",
+    "koa": "^2.13.4",
     "parseurl": "^1.3.3"
   },
   "devDependencies": {
-    "@macchiatojs/kernel": "^0.13.0",
-    "@types/chai": "^4.2.21",
+    "@macchiatojs/kernel": "^0.17.1",
+    "@types/chai": "^4.2.22",
     "@types/koa": "^2.13.4",
     "@types/mocha": "^9.0.0",
-    "@types/node": "^16.7.1",
+    "@types/node": "^16.11.6",
     "@types/supertest": "^2.0.11",
     "@types/trouter": "^3.1.0",
     "@typescript-eslint/eslint-plugin": "^4.29.2",
     "@typescript-eslint/parser": "^4.29.2",
     "chai": "^4.3.4",
     "eslint": "^7.32.0",
-    "koa": "^2.13.1",
-    "mocha": "^9.1.0",
+    "koa": "^2.13.4",
+    "mocha": "^9.1.3",
     "nyc": "^15.1.0",
     "parseurl": "^1.3.3",
     "rimraf": "^3.0.2",
     "supertest": "^6.1.6",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.3.5"
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
   },
   "engines": {
     "node": ">= 14"
