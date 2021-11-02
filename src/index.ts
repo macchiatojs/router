@@ -12,31 +12,30 @@
  * Module dependencies.
  */
 
-import type { IncomingMessage, ServerResponse } from 'http'
-import type { Context, Request, Response, KeyValueObject, MacchiatoHandler, ExpressStyleHandler } from '@macchiatojs/kernel'
-import Middleware from '@macchiatojs/middleware'
-import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
 import Trouter from 'trouter'
-import type { Methods } from 'trouter'
 // TODO: add trek-router ts types
 import TrekRouter from 'trek-router'
-import hashlruCache from 'hashlru'
+import Middleware from '@macchiatojs/middleware'
+import KoaifyMiddleware from '@macchiatojs/koaify-middleware'
 import parse from 'parseurl'
-import type { 
-  Request as KoaRequest,
-  Response as KoaResponse,
-  Context as KoaContext
-} from 'koa'
+import hashlruCache from 'hashlru'
+import type { Methods } from 'trouter'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { MiddlewareEngine, Context, Request, Response, KeyValueObject, MacchiatoHandler, ExpressStyleHandler } from '@macchiatojs/kernel'
+import type { Request as KoaRequest, Response as KoaResponse, Context as KoaContext } from 'koa'
 
 /**
  * @types
  */
 type rawHandler = ExpressStyleHandler<IncomingMessage, ServerResponse>
 type Handler = MacchiatoHandler|rawHandler
-type MiddlewareStore = Middleware<IncomingMessage, ServerResponse>|Middleware<Request, Response>|KoaifyMiddleware<Context>|KoaifyMiddleware<KoaContext>
-type NormalizedRoute = [Handler, KeyValueObject<string>]
-type Route = { params: Record<string, string>, handlers: Handler[] }| NormalizedRoute
+type NormalizedRoute<T=Handler> = [T, KeyValueObject<string>]
+type Route<T=Handler> = { params: Record<string, string>, handlers: T[] }| NormalizedRoute<T>
 type AllowHeaderStore = { path: string; methods: (string | Methods[])[]; }
+type HlruCachAccess = {
+  get: (key: string | number) => unknown;
+  set: (key: string | number, value: unknown) => void;
+}
 
 /**
  * Isomorphic Router for Macchiato.js.
@@ -52,10 +51,8 @@ class Router<THandler = Handler> {
   #METHODS: Methods[]
   #routePrefix: string
   #routePath?: string
-  // FIXME: fix MiddlewareStore type
-  #middlewaresStore: MiddlewareStore|any
-  // TODO: add cache types
-  #cache: any 
+  #middlewaresStore: MiddlewareEngine<THandler>
+  #cache: HlruCachAccess
   #allowHeaderStore: AllowHeaderStore[]
   
   // init Router.
@@ -168,7 +165,7 @@ class Router<THandler = Handler> {
   }
 
   // use given middleware, if and only if, a route is matched.
-  public use (...middlewares: Handler[]): this {
+  public use (...middlewares: THandler[]): this {
     // check middlewares.
     if (middlewares.some(mw => typeof mw !== 'function')) {
       throw new TypeError('".use()" requires a middleware(s) function(s)')
@@ -182,7 +179,8 @@ class Router<THandler = Handler> {
   }
 
   // normalize route from trouter and trek-router.
-  #routeFactory (route: Route): NormalizedRoute {    
+  #routeFactory (route: Route<THandler>): NormalizedRoute<THandler> {
+    // trek-router normalizer behave
     if (Array.isArray(route)) {
       const [handler, routeParams] = route
       const params = {}
@@ -195,6 +193,7 @@ class Router<THandler = Handler> {
       return [handler, params]
     }
 
+    // trouter normalizer behave
     return [route.handlers[0], route.params]
   }
 
@@ -248,7 +247,7 @@ class Router<THandler = Handler> {
       const [handler, routeParams] = this.#routeFactory(route)
 
       // check the handler func isn't defined.
-      if (!handler || handler.length === 0) {
+      if (!handler || handler['length'] === 0) {
         // get methods exist on allow header.
         const allowHeaderFiled = this.#getAllowHeaderTuple(path)
 
@@ -271,7 +270,7 @@ class Router<THandler = Handler> {
             this.#sendResponse(
               405, 
               `"${request.method}" is not allowed in "${originalPath}".`,
-             { 'Allow': allowHeaderFiled.methods.join(', ') }
+              { 'Allow': allowHeaderFiled.methods.join(', ') }
             )(response as ServerResponse)
             return
           }
@@ -286,7 +285,7 @@ class Router<THandler = Handler> {
         if (this.#raw) {
           this.#sendResponse(501, 
             `"${originalPath}" not implemented.`,
-           { 'Allow': '' }
+            { 'Allow': '' }
           )(response as ServerResponse)
           return
         }
