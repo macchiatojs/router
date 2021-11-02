@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from 'supertest'
 import assert from 'assert'
-import Kernel, { Context, Next } from '@macchiatojs/kernel'
+import Kernel from '@macchiatojs/kernel'
+import type { Context, Next } from '@macchiatojs/kernel'
+
 import Router from '../../src'
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']

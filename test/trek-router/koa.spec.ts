@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from 'supertest'
 import assert from 'assert'
 import Koa from 'koa'
-import { Next } from '@macchiatojs/kernel'
+import type { Next } from '@macchiatojs/kernel'
+
 import Router from '../../src'
+
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 

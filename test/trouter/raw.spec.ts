@@ -1,9 +1,12 @@
-import { Next } from '@macchiatojs/kernel';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from 'supertest'
 import assert from 'assert'
-import http, { IncomingMessage, ServerResponse } from 'http'
+import http from 'http'
+import { Next } from '@macchiatojs/kernel'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { RequestListener } from 'node:http'
+
 import Router from '../../src'
-import type { RequestListener } from 'node:http';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
