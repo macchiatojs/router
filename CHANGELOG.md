@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+### v0.10.0 (6 Nov 2021)
+
+- Fix CI by upgrade to v0.19.0 of @macchiatojs/kernel.
+
 ### v0.9.0 (2 Nov 2021)
 
 - fix and improve ts types (cache, middelwareStore, trek-router ...etc).
