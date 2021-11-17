@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+### v0.10.1 (18 Nov 2021)
+
+- fix typo on README.md file.
+
 ### v0.10.0 (6 Nov 2021)
 
 - Fix CI by upgrade to v0.19.0 of @macchiatojs/kernel.
