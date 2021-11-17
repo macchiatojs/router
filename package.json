@@ -1,6 +1,6 @@
 {
   "name": "@macchiatojs/router",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Expressive elegant modern amiable Router for raw Node.js/Macchiato.js/Koa.js ⚡.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
