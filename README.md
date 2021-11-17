@@ -97,7 +97,7 @@ router.get("/hello", (request: IncomingMessage, response: ServerResponse) => {
 
 const server = http.createServer(router.rawRoutes());
 
-app.listen(2222);
+server.listen(2222);
 ```
 
 with Koa.js
