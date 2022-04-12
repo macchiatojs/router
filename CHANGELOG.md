@@ -1,7 +1,7 @@
 # CHANGE LOG
 
 
-### v0.11.0 (10 Apr 2022)
+### v0.11.0 - unreleased
 
 - drop support for Node.js version less than 16.
 - update all deps.
