@@ -1,5 +1,14 @@
 # CHANGE LOG
 
+
+### v0.11.0 (10 Apr 2022)
+
+- drop support for Node.js version less than 16.
+- update all deps.
+- imporve the code quality by use the modren syntax.
+- add engine factory method to load middlewares engines.
+
+
 ### v0.10.1 (18 Nov 2021)
 
 - fix typo on README.md file.
